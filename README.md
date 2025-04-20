@@ -1,4 +1,4 @@
-# Car Listings Scraper for Avito and Moteur
+# Car Listings Scraper for Avito.ma and Moteur.ma
 
 This project contains Python scripts for scraping car listings from Avito.ma and Moteur.ma. It automates the collection of car-related data (such as price, model, year, fuel type) and downloads the associated images. The collected data is stored in CSV format.
 
