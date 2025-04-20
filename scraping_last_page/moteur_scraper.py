@@ -1,27 +1,43 @@
 """
-Scraper complet pour le site moteur.ma - Extraction et traitement de données automobiles
+Moteur.ma Car Listings Scraper
 
-Ce script automatise la collecte de données d'annonces de voitures d'occasion sur moteur.ma
-et les transmet à Kafka pour un traitement en temps réel.
+This script is used to scrape car listings from the `Moteur.ma` website (a Moroccan marketplace for used cars).
+The scraper collects basic information about car listings such as:
+- Title
+- Price
+- Year of manufacture
+- Fuel type
+- Transmission type
+- City of the seller
+- URL of the listing
 
-Fonctionnalités principales:
-- Extraction des annonces automobiles de la page d'accueil du site
-- Récupération des informations détaillées pour chaque annonce (caractéristiques du véhicule)
-- Téléchargement et stockage des images associées à chaque annonce
-- Transformation des dates relatives en dates exactes
-- Stockage des données dans un fichier CSV structuré
-- Envoi des données vers un topic Kafka pour intégration dans un pipeline de données
+In addition, detailed information is scraped from the individual listing pages, including:
+- Mileage
+- Brand and model
+- Equipment and features
+- Seller's location
+- Images associated with the listing
 
-Architecture:
-1. Extraction des annonces basiques de la première page
-2. Visite des pages de détail pour chaque annonce
-3. Récupération des informations supplémentaires et téléchargement des images
-4. Stockage des données dans un CSV et envoi vers Kafka
+The collected data is saved into a CSV file (`moteur_complete.csv`) and the images are saved in a dedicated folder structure.
 
-Sorties:
-- CSV: ../data/moteur/moteur_complete.csv
-- Images: ../data/moteur/images/[dossiers_par_annonce]
+Main Features:
+- Scrapes car listings from the homepage
+- Visits detailed pages for each listing
+- Downloads images and organizes them into specific folders
+- Collects structured data and saves it into a CSV file
+- Saves additional information such as equipment and seller's location
+
+Dependencies:
+- Selenium (for web scraping)
+- Requests (for downloading images)
+- WebDriver Manager (for handling browser drivers)
+- Pandas (for saving data into CSV files)
+
+Usage:
+1. Run the script to scrape car listings from Moteur.ma.
+2. The data will be saved in the `../data/moteur/` directory as a CSV file and images will be stored in the corresponding subfolder.
 """
+ 
 
 import os
 import re
@@ -45,24 +61,7 @@ IMAGES_DIR = os.path.join(DATA_DIR, "images")
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(IMAGES_DIR, exist_ok=True)
 
-# Configuration Kafka
-KAFKA_BOOTSTRAP_SERVERS = 'localhost:9092'  # Modifiez selon votre configuration
-KAFKA_TOPIC = 'moteur_cars'
 
-def send_to_kafka(producer, topic, key, value):
-    """Envoie un message à un topic Kafka."""
-    if producer is None:
-        print("⚠️ Producer Kafka non disponible, message non envoyé")
-        return False
-    
-    try:
-        future = producer.send(topic, key=key, value=value)
-        result = future.get(timeout=60)  # Attend la confirmation de l'envoi
-        print(f"✅ Message envoyé à Kafka: topic={topic}, partition={result.partition}, offset={result.offset}")
-        return True
-    except Exception as e:
-        print(f"❌ Erreur lors de l'envoi à Kafka: {e}")
-        return False
 
 def setup_driver():
     """Configure et initialise le driver Selenium."""
@@ -415,7 +414,6 @@ def main():
         print(f"📊 {len(detailed_data)} annonces complètes récupérées.")
         print(f"📄 Données enregistrées dans: {output_file}")
         print(f"🖼️ Images téléchargées dans: {IMAGES_DIR}")
-        print(f"📡 Données envoyées au topic Kafka: {KAFKA_TOPIC}")
         
     except Exception as e:
         print(f"❌ Erreur globale: {e}")

@@ -1,27 +1,43 @@
 """
-Scraper complet pour le site avito.ma - Extraction et traitement de données automobiles
+Car Listings Scraper for Avito
 
-Ce script automatise la collecte de données d'annonces de voitures d'occasion sur avito.ma
-et les transmet à Kafka pour un traitement en temps réel.
+This script automates the process of scraping car listings from the website `Avito.ma` (Moroccan car marketplace).
+It extracts basic car details from the homepage, such as:
+- Title
+- Price
+- Publication Date
+- Year
+- Fuel Type
+- Transmission Type
+- Seller Type (Private or Professional)
 
-Fonctionnalités principales:
-- Extraction des annonces automobiles de la page d'accueil du site
-- Récupération des informations détaillées pour chaque annonce (caractéristiques du véhicule)
-- Téléchargement et stockage des images associées à chaque annonce
-- Transformation des dates relatives en dates exactes
-- Stockage des données dans un fichier CSV structuré
-- Envoi des données vers un topic Kafka pour intégration dans un pipeline de données
+Additionally, it scrapes detailed information from each car listing, including:
+- Car characteristics (mileage, brand, model, etc.)
+- Equipment details
+- Seller's location
+- Images associated with the listing
 
-Architecture:
-1. Extraction des annonces basiques de la première page
-2. Visite des pages de détail pour chaque annonce
-3. Récupération des informations supplémentaires et téléchargement des images
-4. Stockage des données dans un CSV et envoi vers Kafka
+The data is stored in a CSV file (`avito_complete.csv`), and images are downloaded to a specified directory.
+The script also integrates with Kafka to send the collected data for real-time processing.
 
-Sorties:
-- CSV: ../data/avito/avito_complete.csv
-- Images: ../data/avito/images/[dossiers_par_annonce]
+Main Features:
+- Scrapes car listings from the homepage
+- Visits detailed pages for each listing
+- Downloads images and saves them in organized folders
+- Saves extracted data into a structured CSV file
+- Sends the data to a Kafka topic for further real-time processing
+
+Dependencies:
+- Selenium (for web scraping)
+- Requests (for downloading images)
+- WebDriver Manager (for handling browser drivers)
+- Kafka (for sending data to real-time processing systems)
+
+Usage:
+1. Run the script to scrape car listings from Avito.
+2. The data will be saved in the `../data/avito/` directory as a CSV file and images will be stored in the corresponding subfolder.
 """
+
 
 
 import time
@@ -42,26 +58,6 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 
 
-def send_to_kafka(producer, topic, data, headers):
-    """Envoie les données au topic Kafka spécifié."""
-    if not producer:
-        print("❌ Producteur Kafka non disponible")
-        return False
-    
-    try:
-        # Convertir les données en dictionnaire pour une meilleure lisibilité
-        car_dict = dict(zip(headers, data))
-        
-        # Envoyer au topic Kafka
-        future = producer.send(topic, value=car_dict)
-        # Attendre le résultat pour confirmer l'envoi
-        record_metadata = future.get(timeout=10)
-        
-        print(f"✅ Message envoyé au topic '{topic}' partition {record_metadata.partition} offset {record_metadata.offset}")
-        return True
-    except Exception as e:
-        print(f"❌ Erreur lors de l'envoi au topic '{topic}': {e}")
-        return False
 
 
 def setup_driver():
@@ -491,7 +487,6 @@ def main():
     print("\n✅ SCRAPING PROCESS COMPLETED SUCCESSFULLY!")
     print(f"Complete data saved to: ../data/avito/{output_filename}")
     print(f"Images downloaded to: ../data/avito/images/[listing_folders]")
-    print(f"Data sent to Kafka topic: {kafka_topic}")
 
 
 if __name__ == "__main__":
